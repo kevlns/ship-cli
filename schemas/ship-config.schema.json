@@ -1,0 +1,191 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/kevlns/ship-cli/schemas/ship-config.schema.json",
+  "title": "ship-cli project configuration (ship.config.json)",
+  "description": "Non-secret, repo-committed configuration for shipping a game project to distribution platforms. Secrets (Steam credentials, WeChat upload keys) are never stored here: they come from environment variables or user-level key files referenced by path.",
+  "type": "object",
+  "required": ["schemaVersion"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "description": "Config schema version. Only 1 is supported."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional human-readable project name used in output."
+    },
+    "steam": {
+      "$ref": "#/definitions/steam"
+    },
+    "wechat": {
+      "$ref": "#/definitions/wechat"
+    },
+    "limits": {
+      "$ref": "#/definitions/limits"
+    }
+  },
+  "definitions": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![/\\\\])(?![A-Za-z]:)(?!.*(?:^|[/\\\\])\\.\\.(?:[/\\\\]|$))(?!.*[\\u0000-\\u001f]).+$",
+      "description": "Relative path, forward or back slashes, no leading slash, no '..' segments."
+    },
+    "steam": {
+      "type": "object",
+      "required": ["appId", "contentRoot", "buildOutput", "depots"],
+      "additionalProperties": false,
+      "properties": {
+        "appId": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Steam AppID of the base application."
+        },
+        "contentRoot": {
+          "$ref": "#/definitions/relativePath",
+          "description": "Root directory of built content. Resolved against the config file location."
+        },
+        "buildOutput": {
+          "$ref": "#/definitions/relativePath",
+          "description": "steamcmd BuildOutput directory (logs + chunk cache). Must NOT be inside contentRoot."
+        },
+        "executable": {
+          "$ref": "#/definitions/relativePath",
+          "description": "Optional main executable relative to contentRoot, checked by 'steam test'."
+        },
+        "steamcmdPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional explicit steamcmd executable path. Env SHIP_STEAMCMD wins over this."
+        },
+        "depots": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/depot"
+          }
+        }
+      }
+    },
+    "depot": {
+      "type": "object",
+      "required": ["id", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Depot ID. Convention: base app depots start at appId+1."
+        },
+        "source": {
+          "$ref": "#/definitions/relativePath",
+          "description": "Directory inside contentRoot whose CONTENTS map to the depot root. Use \".\" for the whole contentRoot."
+        },
+        "exclusions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "FileExclusion glob patterns for this depot, e.g. *.pdb, *_BurstDebugInformation_DoNotShip*."
+        }
+      }
+    },
+    "wechat": {
+      "type": "object",
+      "required": ["appid", "projectPath"],
+      "additionalProperties": false,
+      "properties": {
+        "appid": {
+          "type": "string",
+          "pattern": "^wx[0-9a-f]{16}$",
+          "description": "WeChat mini game AppID."
+        },
+        "projectPath": {
+          "$ref": "#/definitions/relativePath",
+          "description": "Mini game project directory (contains game.json / game.js / project.config.json)."
+        },
+        "robot": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "default": 1,
+          "description": "miniprogram-ci robot slot (1-30). Different robots keep separate dev-version records in the MP backend."
+        },
+        "privateKeyPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path to the code-upload private key file downloaded from the MP backend. Env SHIP_WX_PRIVATE_KEY / WX_UPLOAD_KEY wins over this. May contain '~'."
+        },
+        "ignores": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": ["node_modules/**/*"],
+          "description": "Glob rules passed directly to ci.Project and used by source-size estimation."
+        },
+        "setting": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "useProjectConfig": {
+              "type": "boolean"
+            },
+            "es6": {
+              "type": "boolean"
+            },
+            "es7": {
+              "type": "boolean"
+            },
+            "minify": {
+              "type": "boolean"
+            },
+            "minifyJS": {
+              "type": "boolean"
+            },
+            "codeProtect": {
+              "type": "boolean"
+            },
+            "autoPrefixWXSS": {
+              "type": "boolean"
+            }
+          }
+        },
+        "bigPackageSizeSupport": {
+          "type": "boolean",
+          "default": false,
+          "description": "SDK preview-only option; does not alter upload limits."
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 3600000,
+          "default": 900000
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "WeChat package size limits in bytes (1024-based M). Defaults follow official rules as of 2026-10; override only when WeChat changes them.",
+      "properties": {
+        "wxMainBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "wxIndependentSubpackageBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "wxTotalBytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

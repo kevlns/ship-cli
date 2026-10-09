@@ -1,0 +1,79 @@
+{
+  "name": "@kevlns/ship-cli",
+  "version": "0.1.0",
+  "description": "Cross-platform game shipping CLI. Validate, package and push builds to game platforms (Steam via steamcmd VDF builds, WeChat mini games via miniprogram-ci). Never publishes to players on its own.",
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "bin": {
+    "ship-cli": "dist/cli.mjs"
+  },
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/",
+    "schemas/",
+    "v-cli.plugin.json",
+    "AGENTS.md",
+    "README.md",
+    "LICENSE",
+    "docs/research/"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src tests scripts",
+    "check": "npm run build && npm run typecheck && npm run test && npm run lint && npm run pack:guard",
+    "pack:guard": "node scripts/pack-guard.mjs",
+    "test:package": "node scripts/test-package-install.mjs",
+    "prepack": "npm run build",
+    "pretest": "npm run build"
+  },
+  "keywords": [
+    "game",
+    "shipping",
+    "steam",
+    "steamcmd",
+    "steampipe",
+    "wechat",
+    "minigame",
+    "miniprogram-ci",
+    "publish"
+  ],
+  "author": "kevlns",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "commander": "12.1.0",
+    "minimatch": "9.0.9"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.6.0",
+    "@types/node": "20.19.0",
+    "eslint": "9.6.0",
+    "tsup": "8.5.1",
+    "typescript": "5.6.3",
+    "typescript-eslint": "8.71.1",
+    "vitest": "4.1.11"
+  },
+  "vCli": {
+    "manifest": "v-cli.plugin.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kevlns/ship-cli.git"
+  },
+  "homepage": "https://github.com/kevlns/ship-cli#readme",
+  "bugs": {
+    "url": "https://github.com/kevlns/ship-cli/issues"
+  }
+}

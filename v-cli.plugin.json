@@ -1,0 +1,486 @@
+{
+  "schemaVersion": 1,
+  "package": "@kevlns/ship-cli",
+  "command": "ship",
+  "bin": "ship-cli",
+  "description": "Cross-platform game shipping CLI: offline validation + packaging + push to platform test channels. Steam (steamcmd/SteamPipe VDF builds, branch set-live guard) and WeChat mini games (structure/size validation, miniprogram-ci preview QR and dev-version upload). Never publishes to players on its own.",
+  "platforms": [
+    "win32",
+    "linux",
+    "darwin"
+  ],
+  "runtime": {
+    "node": ">=20"
+  },
+  "environment": [
+    {
+      "name": "SHIP_STEAMCMD",
+      "description": "Optional explicit path to steamcmd executable (wins over steam.steamcmdPath in ship.config.json; PATH and common install dirs are also searched)."
+    },
+    {
+      "name": "SHIP_STEAM_USERNAME",
+      "description": "Steam build-account username. Required for steam push/preview."
+    },
+    {
+      "name": "SHIP_STEAM_PASSWORD",
+      "description": "Steam build-account password. Omit to use passwordless login via a cached config.vdf."
+    },
+    {
+      "name": "SHIP_STEAM_TOTP",
+      "description": "Precomputed Steam Guard code for this 30s window."
+    },
+    {
+      "name": "SHIP_STEAM_TOTP_SECRET",
+      "description": "Steam Guard shared secret (base64); the TOTP code is generated at run time. Preferred for CI."
+    },
+    {
+      "name": "SHIP_STEAM_CONFIG_VDF",
+      "description": "base64-encoded steamcmd config/config.vdf carrying a logged-in token; seeded next to steamcmd for passwordless login. Re-entering a password invalidates the old token."
+    },
+    {
+      "name": "SHIP_WX_PRIVATE_KEY",
+      "description": "Path to the WeChat code-upload private key; wins over wechat.privateKeyPath in ship.config.json."
+    }
+  ],
+  "agent": {
+    "whenToUse": "Shipping a built game to distribution platforms: packaging/upload to Steam (depot builds via steamcmd) or WeChat mini games (dev-version upload via miniprogram-ci), plus offline package validation and environment preflight. NOT for: making content player-visible (Steam default-branch set-live, WeChat review submission/release/gray rollout are always human steps in platform backends), building engine players (produce artifacts first), or account/credential setup beyond pointing at env vars.",
+    "globalOptions": [
+      {
+        "flags": "--project <dir>",
+        "description": "Directory containing ship.config.json (default: cwd; searched upward)."
+      },
+      {
+        "flags": "-V, --version",
+        "description": "Print the CLI version."
+      },
+      {
+        "flags": "-h, --help",
+        "description": "Show help."
+      }
+    ],
+    "commands": [
+      {
+        "path": [
+          "doctor"
+        ],
+        "usage": "ship-cli doctor [--json]",
+        "description": "Offline preflight: config loadability, steamcmd presence, credential mode, wechat project dir, upload key, miniprogram-ci resolvability. Makes no network calls.",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--json",
+            "description": "Print the full report as JSON."
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "JSON report with per-check status (ok/warn/fail); human mode prints a checklist."
+        },
+        "exitCodes": {
+          "0": "report produced (individual checks carry their own status)"
+        },
+        "safety": [
+          "read-only",
+          "no-network"
+        ]
+      },
+      {
+        "path": [
+          "config",
+          "init"
+        ],
+        "usage": "ship-cli config init [--force] [--json]",
+        "description": "Write a ship.config.json template into the project directory. Refuses to overwrite an existing file unless --force.",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--force",
+            "description": "Overwrite an existing ship.config.json."
+          },
+          {
+            "flags": "--json",
+            "description": "Print JSON result."
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Human path message, or {written, force} with --json."
+        },
+        "exitCodes": {
+          "0": "written",
+          "1": "CFG_CONFIG_EXISTS without --force"
+        },
+        "safety": [
+          "writes-project-files",
+          "refuses-overwrite-without-force"
+        ]
+      },
+      {
+        "path": [
+          "config",
+          "validate"
+        ],
+        "usage": "ship-cli config validate [--json]",
+        "description": "Load, schema-validate and cross-field-validate ship.config.json (depot sources inside contentRoot, buildOutput/contentRoot not nested, etc.). Any failure prints a stable code plus a concrete fix suggestion.",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--json",
+            "description": "Print JSON summary."
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Section summary; throws with CFG_* code and details on any violation."
+        },
+        "exitCodes": {
+          "0": "valid",
+          "1": "CFG_* validation failure"
+        },
+        "safety": [
+          "read-only"
+        ]
+      },
+      {
+        "path": [
+          "config",
+          "show"
+        ],
+        "usage": "ship-cli config show [--json]",
+        "description": "Print the normalized config (paths resolved, defaults applied where relevant).",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--json",
+            "description": "Print as JSON."
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Config document with projectRoot."
+        },
+        "exitCodes": {
+          "0": "ok",
+          "1": "config missing/invalid"
+        },
+        "safety": [
+          "read-only"
+        ]
+      },
+      {
+        "path": [
+          "steam",
+          "vdf"
+        ],
+        "usage": "ship-cli steam vdf [--desc <text>] [--set-live <branch>] [--preview] [--json]",
+        "description": "Generate app_build_<appId>.vdf + depot_build_<id>.vdf under <buildOutput>/vdf without running steamcmd. Inspect them or hand-run steamcmd yourself.",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--desc <text>",
+            "description": "Build description recorded on the partner Builds page."
+          },
+          {
+            "flags": "--set-live <branch>",
+            "description": "Branch to auto set live after upload; 'default' is rejected (Valve forbids auto set-live on default)."
+          },
+          {
+            "flags": "--preview",
+            "description": "Write Preview=1 (dry-run VDF)."
+          },
+          {
+            "flags": "--json",
+            "description": "Print generated file paths as JSON."
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Written VDF paths + effective preview/setLive values."
+        },
+        "exitCodes": {
+          "0": "written",
+          "1": "config/validation failure (incl. STM_SETLIVE_DEFAULT)"
+        },
+        "safety": [
+          "writes-build-output-files",
+          "no-network",
+          "refuses-set-live-default"
+        ]
+      },
+      {
+        "path": [
+          "steam",
+          "preview"
+        ],
+        "usage": "ship-cli steam preview [--desc <text>] [--json]",
+        "description": "Run steamcmd with Preview=1: the full build pipeline (login, chunking, manifest) but NOTHING is uploaded. Produces logs + a file manifest for inspection.",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--desc <text>",
+            "description": "Build description."
+          },
+          {
+            "flags": "--json",
+            "description": "Print JSON summary."
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "appId, buildId (from log), log path; verdict from log analysis (steamcmd exit codes are unreliable)."
+        },
+        "exitCodes": {
+          "0": "preview pipeline succeeded",
+          "2": "steamcmd/credentials missing",
+          "3": "steamcmd run failed or outcome unknown (fail-closed)"
+        },
+        "safety": [
+          "spawns-steamcmd",
+          "no-upload",
+          "writes-build-output-files",
+          "requires-steam-credentials"
+        ]
+      },
+      {
+        "path": [
+          "steam",
+          "push"
+        ],
+        "usage": "ship-cli steam push [--desc <text>] [--set-live <branch>] [--json]",
+        "description": "Upload a real depot build via steamcmd. Optionally set it live on a NON-default branch (Valve forbids automatic default-branch set-live; that step stays human in App Admin -> Builds).",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--desc <text>",
+            "description": "Build description recorded on the Builds page."
+          },
+          {
+            "flags": "--set-live <branch>",
+            "description": "Non-default branch to auto set live after upload (e.g. beta, staging). 'default' is rejected."
+          },
+          {
+            "flags": "--json",
+            "description": "Print JSON summary."
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "appId, buildId, setLive branch, log path, VDF dir."
+        },
+        "exitCodes": {
+          "0": "build uploaded (+ optionally set live on non-default branch)",
+          "1": "config/validation failure (incl. STM_SETLIVE_DEFAULT)",
+          "2": "steamcmd/credentials/content missing",
+          "3": "steamcmd run failed or outcome unknown"
+        },
+        "safety": [
+          "spawns-steamcmd",
+          "uploads-build-to-steam-backend",
+          "writes-build-output-files",
+          "requires-steam-credentials",
+          "never-player-visible",
+          "refuses-set-live-default"
+        ]
+      },
+      {
+        "path": [
+          "steam",
+          "test"
+        ],
+        "usage": "ship-cli steam test [--write-appid] [--json]",
+        "description": "Local smoke checks on the built content: steam_appid.txt presence/match (optionally write it), steam_api*.dll presence, configured executable existence, plus run/builds URLs.",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--write-appid",
+            "description": "Create steam_appid.txt in contentRoot when missing (idempotent)."
+          },
+          {
+            "flags": "--json",
+            "description": "Print JSON summary."
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Local file prerequisites including Steam API libraries for Windows/Linux/macOS; missing requirements fail with details."
+        },
+        "exitCodes": {
+          "0": "all local file prerequisites passed",
+          "1": "AppID mismatch or invalid configuration",
+          "2": "missing local file prerequisite"
+        },
+        "safety": [
+          "read-only",
+          "optionally-writes-steam-appid-txt"
+        ]
+      },
+      {
+        "path": [
+          "steam",
+          "open"
+        ],
+        "usage": "ship-cli steam open <target>",
+        "description": "Open a Steamworks partner page in the browser. Only target: builds (App Admin -> Builds, where set-live/rollback are done by humans).",
+        "arguments": [
+          {
+            "name": "target",
+            "required": true,
+            "description": "Page to open; currently 'builds'."
+          }
+        ],
+        "options": [],
+        "output": {
+          "format": "text",
+          "description": "Opens the default browser; no stdout payload."
+        },
+        "exitCodes": {
+          "0": "opened",
+          "1": "unknown target"
+        },
+        "safety": [
+          "opens-browser"
+        ]
+      },
+      {
+        "path": [
+          "wx",
+          "validate"
+        ],
+        "usage": "ship-cli wx validate [--json]",
+        "description": "Offline structure and filtered source estimate checks (not actual compiled package size).",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--json",
+            "description": "Print the full JSON report."
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Report with per-package sizes, limits, errors (WX_* codes) and warnings."
+        },
+        "exitCodes": {
+          "0": "no errors (warnings possible)",
+          "1": "WX_* validation errors"
+        },
+        "safety": [
+          "read-only",
+          "no-network"
+        ]
+      },
+      {
+        "path": [
+          "wx",
+          "preview"
+        ],
+        "usage": "ship-cli wx preview [--qr-out <file>] [--desc <text>] [--robot <n>] [--json]",
+        "description": "Generate a phone-test QR code via miniprogram-ci (no version record is created). miniprogram-ci must be installed in the project.",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--qr-out <file>",
+            "description": "New PNG output outside game content; default build/ship-preview/<uuid>/qr.png."
+          },
+          {
+            "flags": "--desc <text>",
+            "description": "Note shown in the dev-version list."
+          },
+          {
+            "flags": "--robot <n>",
+            "description": "miniprogram-ci robot slot 1-30."
+          },
+          {
+            "flags": "--json",
+            "description": "Print JSON result."
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "Result contains actual absolute qrOut, SDK result and ok; a new PNG outside game content is required."
+        },
+        "exitCodes": {
+          "0": "QR generated",
+          "1": "invalid structure, parameters or output path",
+          "2": "key/miniprogram-ci missing",
+          "4": "miniprogram-ci run failed"
+        },
+        "safety": [
+          "spawns-miniprogram-ci",
+          "requires-upload-key",
+          "no-version-created"
+        ]
+      },
+      {
+        "path": [
+          "wx",
+          "push"
+        ],
+        "usage": "ship-cli wx push --version <text> [--desc <text>] [--robot <n>] [--json]",
+        "description": "Upload a new dev version via miniprogram-ci after running the same offline validation as wx validate (a failed validation prints the complete report with per-item fix suggestions and blocks the upload). Creates a dev version ONLY: selecting 体验版, submitting for review, release and gray rollout are human steps in the MP backend.",
+        "arguments": [],
+        "options": [
+          {
+            "flags": "--version <text>",
+            "description": "Dev-version number, e.g. 1.0.0 (required)."
+          },
+          {
+            "flags": "--desc <text>",
+            "description": "Upload note / changelog shown in the backend."
+          },
+          {
+            "flags": "--robot <n>",
+            "description": "miniprogram-ci robot slot 1-30 (separate pipelines use separate robots)."
+          },
+          {
+            "flags": "--json",
+            "description": "Print JSON result."
+          }
+        ],
+        "output": {
+          "format": "json",
+          "description": "appid, robot, version and miniprogram-ci result incl. subPackageInfo sizes."
+        },
+        "exitCodes": {
+          "0": "uploaded as dev version",
+          "1": "validation/config failure",
+          "2": "key/miniprogram-ci missing",
+          "4": "upload failed"
+        },
+        "safety": [
+          "spawns-miniprogram-ci",
+          "uploads-dev-version",
+          "requires-upload-key",
+          "never-submits-review",
+          "never-player-visible"
+        ]
+      },
+      {
+        "path": [
+          "wx",
+          "open"
+        ],
+        "usage": "ship-cli wx open <target>",
+        "description": "Open the WeChat MP backend in the browser. Only target: mp.",
+        "arguments": [
+          {
+            "name": "target",
+            "required": true,
+            "description": "Page to open; currently 'mp'."
+          }
+        ],
+        "options": [],
+        "output": {
+          "format": "text",
+          "description": "Opens the default browser; no stdout payload."
+        },
+        "exitCodes": {
+          "0": "opened",
+          "1": "unknown target"
+        },
+        "safety": [
+          "opens-browser"
+        ]
+      }
+    ]
+  }
+}
