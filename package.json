@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/ship-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cross-platform game shipping CLI. Validate, package and push builds to game platforms (Steam via steamcmd VDF builds, WeChat mini games via miniprogram-ci). Never publishes to players on its own.",
   "private": false,
   "publishConfig": {

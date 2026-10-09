@@ -1,5 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import { CliError, exitCodeFor } from "./core/errors.ts";
 import { log } from "./core/logger.ts";
@@ -200,7 +201,7 @@ export function cliErrorExit(err: unknown): number {
 
 const invokedDirect =
   process.argv[1] !== undefined &&
-  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+  realpathSync(fileURLToPath(import.meta.url)) === realpathSync(path.resolve(process.argv[1]));
 
 if (invokedDirect) {
   try {

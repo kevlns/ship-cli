@@ -14,7 +14,7 @@ const tool = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let root: string;
 let key: string;
 beforeEach(async () => {
-  root = await fs.mkdtemp(path.join(os.tmpdir(), "ship-regression-"));
+  root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "ship-regression-")));
   key = path.join(root, "upload.pem");
   const { privateKey } = generateKeyPairSync("rsa", {
     modulusLength: 1024,
@@ -247,6 +247,11 @@ describe("path and resource validation", () => {
 });
 
 describe("process safety", () => {
+  it("executes through a symbolic npm bin path",async()=>{
+    const link=path.join(root,"tool-link");await fs.symlink(tool,link,"junction");
+    try {const result=spawnSync(process.execPath,[path.join(link,"dist/cli.mjs"),"--version"],{encoding:"utf8"});expect(result.status).toBe(0);expect(result.stdout.trim()).toBe(JSON.parse(await fs.readFile(path.join(tool,"package.json"),"utf8")).version);}
+    finally{await fs.unlink(link);}
+  });
   it("resolves configured Steam tools from the config directory when called below it",async()=>{
     const nested=path.join(root,"nested");await fs.mkdir(nested);
     await fs.writeFile(path.join(root,"ship.config.json"),JSON.stringify({schemaVersion:1,steam:{appId:1,steamcmdPath:"tools/steamcmd.exe",contentRoot:"content",buildOutput:"cache",depots:[{id:2,source:"."}]}}));

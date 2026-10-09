@@ -10,11 +10,11 @@ Node.js 20 及以上。npm 安装：`npm install -g @kevlns/ship-cli`。源码�
 npm ci
 npm run check
 npm pack
-npm install -g ./kevlns-ship-cli-0.1.0.tgz
+npm install -g ./kevlns-ship-cli-0.1.1.tgz
 ship-cli --version
 ```
 
-v-cli 已注册 ship 为官方可选 peer 插件。将两者安装在同一 npm prefix 后自动发现：
+v-cli 已注册 ship 为官方随包官方依赖，随 v-cli 安装并自动发现：
 
 ```bash
 v-cli plugin list --json
