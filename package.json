@@ -1,7 +1,7 @@
 {
   "name": "@kevlns/ship-cli",
-  "version": "0.1.1",
-  "description": "Cross-platform game shipping CLI. Validate, package and push builds to game platforms (Steam via steamcmd VDF builds, WeChat mini games via miniprogram-ci). Never publishes to players on its own.",
+  "version": "0.1.2",
+  "description": "校验已构建的游戏产物，执行 Steam 上传、微信小游戏预览和开发版上传。",
   "private": false,
   "publishConfig": {
     "access": "public",
@@ -22,18 +22,19 @@
     "AGENTS.md",
     "README.md",
     "LICENSE",
-    "docs/research/"
+    "docs/"
   ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint src tests scripts",
-    "check": "npm run build && npm run typecheck && npm run test && npm run lint && npm run pack:guard",
+    "check": "npm run docs:style && npm run build && npm run typecheck && npm run test && npm run lint && npm run pack:guard",
     "pack:guard": "node scripts/pack-guard.mjs",
     "test:package": "node scripts/test-package-install.mjs",
     "prepack": "npm run build",
-    "pretest": "npm run build"
+    "pretest": "npm run build",
+    "docs:style": "node scripts/check-documentation.mjs"
   },
   "keywords": [
     "game",
@@ -46,7 +47,7 @@
     "miniprogram-ci",
     "publish"
   ],
-  "author": "kevlns",
+  "author": "Vant",
   "license": "MIT",
   "engines": {
     "node": ">=20"

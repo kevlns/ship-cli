@@ -3,7 +3,7 @@
   "package": "@kevlns/ship-cli",
   "command": "ship",
   "bin": "ship-cli",
-  "description": "Cross-platform game shipping CLI: offline validation + packaging + push to platform test channels. Steam (steamcmd/SteamPipe VDF builds, branch set-live guard) and WeChat mini games (structure/size validation, miniprogram-ci preview QR and dev-version upload). Never publishes to players on its own.",
+  "description": "校验已构建的游戏产物，执行 Steam 上传、微信小游戏预览和开发版上传。",
   "platforms": [
     "win32",
     "linux",
@@ -15,47 +15,47 @@
   "environment": [
     {
       "name": "SHIP_STEAMCMD",
-      "description": "Optional explicit path to steamcmd executable (wins over steam.steamcmdPath in ship.config.json; PATH and common install dirs are also searched)."
+      "description": "steamcmd 路径，优先于配置；未指定时搜索 PATH 与常用安装目录。"
     },
     {
       "name": "SHIP_STEAM_USERNAME",
-      "description": "Steam build-account username. Required for steam push/preview."
+      "description": "Steam 构建账号，push 和 preview 使用。"
     },
     {
       "name": "SHIP_STEAM_PASSWORD",
-      "description": "Steam build-account password. Omit to use passwordless login via a cached config.vdf."
+      "description": "Steam 构建密码；使用有效 config.vdf 缓存时可省略。"
     },
     {
       "name": "SHIP_STEAM_TOTP",
-      "description": "Precomputed Steam Guard code for this 30s window."
+      "description": "当前 30 秒窗口的 Steam Guard 验证码。"
     },
     {
       "name": "SHIP_STEAM_TOTP_SECRET",
-      "description": "Steam Guard shared secret (base64); the TOTP code is generated at run time. Preferred for CI."
+      "description": "base64 Steam Guard 共享密钥，用于运行时生成 TOTP。"
     },
     {
       "name": "SHIP_STEAM_CONFIG_VDF",
-      "description": "base64-encoded steamcmd config/config.vdf carrying a logged-in token; seeded next to steamcmd for passwordless login. Re-entering a password invalidates the old token."
+      "description": "base64 编码的 steamcmd config/config.vdf 登录缓存；密码登录会使已有令牌失效。"
     },
     {
       "name": "SHIP_WX_PRIVATE_KEY",
-      "description": "Path to the WeChat code-upload private key; wins over wechat.privateKeyPath in ship.config.json."
+      "description": "微信上传私钥路径，优先于 wechat.privateKeyPath。"
     }
   ],
   "agent": {
-    "whenToUse": "Shipping a built game to distribution platforms: packaging/upload to Steam (depot builds via steamcmd) or WeChat mini games (dev-version upload via miniprogram-ci), plus offline package validation and environment preflight. NOT for: making content player-visible (Steam default-branch set-live, WeChat review submission/release/gray rollout are always human steps in platform backends), building engine players (produce artifacts first), or account/credential setup beyond pointing at env vars.",
+    "whenToUse": "处理已构建游戏的 Steam 上传、微信小游戏预览与开发版上传；执行离线产物校验与环境检查。正式发布、提审和账号管理在平台后台完成，工具不构建引擎产物。",
     "globalOptions": [
       {
         "flags": "--project <dir>",
-        "description": "Directory containing ship.config.json (default: cwd; searched upward)."
+        "description": "包含 ship.config.json 的目录，默认当前目录并向上查找。"
       },
       {
         "flags": "-V, --version",
-        "description": "Print the CLI version."
+        "description": "输出工具版本。"
       },
       {
         "flags": "-h, --help",
-        "description": "Show help."
+        "description": "显示帮助。"
       }
     ],
     "commands": [
@@ -64,20 +64,20 @@
           "doctor"
         ],
         "usage": "ship-cli doctor [--json]",
-        "description": "Offline preflight: config loadability, steamcmd presence, credential mode, wechat project dir, upload key, miniprogram-ci resolvability. Makes no network calls.",
+        "description": "离线检查配置、steamcmd、凭据模式、微信工程、私钥与 miniprogram-ci，不联网。",
         "arguments": [],
         "options": [
           {
             "flags": "--json",
-            "description": "Print the full report as JSON."
+            "description": "输出完整 JSON 报告。"
           }
         ],
         "output": {
           "format": "json",
-          "description": "JSON report with per-check status (ok/warn/fail); human mode prints a checklist."
+          "description": "返回逐项 ok/warn/fail 状态；文本模式显示检查清单。"
         },
         "exitCodes": {
-          "0": "report produced (individual checks carry their own status)"
+          "0": "报告已生成，各检查项单独记录状态。"
         },
         "safety": [
           "read-only",
@@ -90,25 +90,25 @@
           "init"
         ],
         "usage": "ship-cli config init [--force] [--json]",
-        "description": "Write a ship.config.json template into the project directory. Refuses to overwrite an existing file unless --force.",
+        "description": "写入 ship.config.json 模板；覆盖现有文件必须指定 --force。",
         "arguments": [],
         "options": [
           {
             "flags": "--force",
-            "description": "Overwrite an existing ship.config.json."
+            "description": "覆盖现有 ship.config.json。"
           },
           {
             "flags": "--json",
-            "description": "Print JSON result."
+            "description": "输出 JSON 结果。"
           }
         ],
         "output": {
           "format": "json",
-          "description": "Human path message, or {written, force} with --json."
+          "description": "返回写入路径，JSON 模式返回 written 和 force。"
         },
         "exitCodes": {
-          "0": "written",
-          "1": "CFG_CONFIG_EXISTS without --force"
+          "0": "已写入。",
+          "1": "配置已存在且未指定 --force，返回 CFG_CONFIG_EXISTS。"
         },
         "safety": [
           "writes-project-files",
@@ -121,21 +121,21 @@
           "validate"
         ],
         "usage": "ship-cli config validate [--json]",
-        "description": "Load, schema-validate and cross-field-validate ship.config.json (depot sources inside contentRoot, buildOutput/contentRoot not nested, etc.). Any failure prints a stable code plus a concrete fix suggestion.",
+        "description": "校验配置结构与字段关系，包括 Depot 来源、产物与缓存目录隔离；失败返回稳定错误码及处理建议。",
         "arguments": [],
         "options": [
           {
             "flags": "--json",
-            "description": "Print JSON summary."
+            "description": "输出 JSON 摘要。"
           }
         ],
         "output": {
           "format": "json",
-          "description": "Section summary; throws with CFG_* code and details on any violation."
+          "description": "返回各配置段摘要；校验失败返回 CFG_* 及详细原因。"
         },
         "exitCodes": {
-          "0": "valid",
-          "1": "CFG_* validation failure"
+          "0": "有效。",
+          "1": "配置校验失败，返回 CFG_*。"
         },
         "safety": [
           "read-only"
@@ -147,21 +147,21 @@
           "show"
         ],
         "usage": "ship-cli config show [--json]",
-        "description": "Print the normalized config (paths resolved, defaults applied where relevant).",
+        "description": "输出已解析路径并应用默认值的配置。",
         "arguments": [],
         "options": [
           {
             "flags": "--json",
-            "description": "Print as JSON."
+            "description": "输出 JSON。"
           }
         ],
         "output": {
           "format": "json",
-          "description": "Config document with projectRoot."
+          "description": "返回包含 projectRoot 的配置。"
         },
         "exitCodes": {
-          "0": "ok",
-          "1": "config missing/invalid"
+          "0": "成功。",
+          "1": "配置缺失或无效。"
         },
         "safety": [
           "read-only"
@@ -173,33 +173,33 @@
           "vdf"
         ],
         "usage": "ship-cli steam vdf [--desc <text>] [--set-live <branch>] [--preview] [--json]",
-        "description": "Generate app_build_<appId>.vdf + depot_build_<id>.vdf under <buildOutput>/vdf without running steamcmd. Inspect them or hand-run steamcmd yourself.",
+        "description": "在 <buildOutput>/vdf 生成 App 和 Depot 的 VDF，不运行 steamcmd。",
         "arguments": [],
         "options": [
           {
             "flags": "--desc <text>",
-            "description": "Build description recorded on the partner Builds page."
+            "description": "Steam 构建页面显示的说明。"
           },
           {
             "flags": "--set-live <branch>",
-            "description": "Branch to auto set live after upload; 'default' is rejected (Valve forbids auto set-live on default)."
+            "description": "上传后启用的测试分支，拒绝 default。"
           },
           {
             "flags": "--preview",
-            "description": "Write Preview=1 (dry-run VDF)."
+            "description": "生成 Preview=1 的预演 VDF。"
           },
           {
             "flags": "--json",
-            "description": "Print generated file paths as JSON."
+            "description": "以 JSON 返回生成文件路径。"
           }
         ],
         "output": {
           "format": "json",
-          "description": "Written VDF paths + effective preview/setLive values."
+          "description": "返回 VDF 路径和实际 preview/setLive 设置。"
         },
         "exitCodes": {
-          "0": "written",
-          "1": "config/validation failure (incl. STM_SETLIVE_DEFAULT)"
+          "0": "已写入。",
+          "1": "配置或内容校验失败，可能返回 STM_SETLIVE_DEFAULT。"
         },
         "safety": [
           "writes-build-output-files",
@@ -213,26 +213,26 @@
           "preview"
         ],
         "usage": "ship-cli steam preview [--desc <text>] [--json]",
-        "description": "Run steamcmd with Preview=1: the full build pipeline (login, chunking, manifest) but NOTHING is uploaded. Produces logs + a file manifest for inspection.",
+        "description": "以 Preview=1 执行 steamcmd，生成本地日志和文件清单，不上传内容。",
         "arguments": [],
         "options": [
           {
             "flags": "--desc <text>",
-            "description": "Build description."
+            "description": "构建说明。"
           },
           {
             "flags": "--json",
-            "description": "Print JSON summary."
+            "description": "输出 JSON 摘要。"
           }
         ],
         "output": {
           "format": "json",
-          "description": "appId, buildId (from log), log path; verdict from log analysis (steamcmd exit codes are unreliable)."
+          "description": "返回 appId、日志中识别的 buildId 和日志路径；结合日志判定结果，不只依赖进程退出码。"
         },
         "exitCodes": {
-          "0": "preview pipeline succeeded",
-          "2": "steamcmd/credentials missing",
-          "3": "steamcmd run failed or outcome unknown (fail-closed)"
+          "0": "预演流程成功。",
+          "2": "steamcmd 或凭据缺失。",
+          "3": "steamcmd 执行失败或结果未知。"
         },
         "safety": [
           "spawns-steamcmd",
@@ -247,31 +247,31 @@
           "push"
         ],
         "usage": "ship-cli steam push [--desc <text>] [--set-live <branch>] [--json]",
-        "description": "Upload a real depot build via steamcmd. Optionally set it live on a NON-default branch (Valve forbids automatic default-branch set-live; that step stays human in App Admin -> Builds).",
+        "description": "上传 Depot 构建；可明确启用非 default 测试分支，正式分支在 Steamworks 后台操作。",
         "arguments": [],
         "options": [
           {
             "flags": "--desc <text>",
-            "description": "Build description recorded on the Builds page."
+            "description": "Steam 构建页面显示的说明。"
           },
           {
             "flags": "--set-live <branch>",
-            "description": "Non-default branch to auto set live after upload (e.g. beta, staging). 'default' is rejected."
+            "description": "上传后启用的测试分支，例如 beta 或 staging；拒绝 default。"
           },
           {
             "flags": "--json",
-            "description": "Print JSON summary."
+            "description": "输出 JSON 摘要。"
           }
         ],
         "output": {
           "format": "json",
-          "description": "appId, buildId, setLive branch, log path, VDF dir."
+          "description": "返回 appId、buildId、setLive、日志路径和 VDF 目录。"
         },
         "exitCodes": {
-          "0": "build uploaded (+ optionally set live on non-default branch)",
-          "1": "config/validation failure (incl. STM_SETLIVE_DEFAULT)",
-          "2": "steamcmd/credentials/content missing",
-          "3": "steamcmd run failed or outcome unknown"
+          "0": "构建已上传；明确配置时启用非 default 测试分支。",
+          "1": "配置或内容校验失败，可能返回 STM_SETLIVE_DEFAULT。",
+          "2": "steamcmd、凭据或产物缺失。",
+          "3": "steamcmd 执行失败或结果未知。"
         },
         "safety": [
           "spawns-steamcmd",
@@ -288,26 +288,26 @@
           "test"
         ],
         "usage": "ship-cli steam test [--write-appid] [--json]",
-        "description": "Local smoke checks on the built content: steam_appid.txt presence/match (optionally write it), steam_api*.dll presence, configured executable existence, plus run/builds URLs.",
+        "description": "离线检查 steam_appid.txt、Steam API 库、已配置可执行文件，并返回启动和构建页面地址。",
         "arguments": [],
         "options": [
           {
             "flags": "--write-appid",
-            "description": "Create steam_appid.txt in contentRoot when missing (idempotent)."
+            "description": "缺失时在 contentRoot 创建 steam_appid.txt。"
           },
           {
             "flags": "--json",
-            "description": "Print JSON summary."
+            "description": "输出 JSON 摘要。"
           }
         ],
         "output": {
           "format": "json",
-          "description": "Local file prerequisites including Steam API libraries for Windows/Linux/macOS; missing requirements fail with details."
+          "description": "检查 Windows/Linux/macOS 所需的 Steam API 文件，缺失时报告详细原因。"
         },
         "exitCodes": {
-          "0": "all local file prerequisites passed",
-          "1": "AppID mismatch or invalid configuration",
-          "2": "missing local file prerequisite"
+          "0": "本地文件前置条件全部通过。",
+          "1": "AppID 不匹配或配置无效。",
+          "2": "本地必要文件缺失。"
         },
         "safety": [
           "read-only",
@@ -320,22 +320,22 @@
           "open"
         ],
         "usage": "ship-cli steam open <target>",
-        "description": "Open a Steamworks partner page in the browser. Only target: builds (App Admin -> Builds, where set-live/rollback are done by humans).",
+        "description": "在浏览器打开 Steamworks 的 builds 页面。",
         "arguments": [
           {
             "name": "target",
             "required": true,
-            "description": "Page to open; currently 'builds'."
+            "description": "目标页面，当前为 builds。"
           }
         ],
         "options": [],
         "output": {
           "format": "text",
-          "description": "Opens the default browser; no stdout payload."
+          "description": "打开默认浏览器，无标准输出结果。"
         },
         "exitCodes": {
-          "0": "opened",
-          "1": "unknown target"
+          "0": "已打开。",
+          "1": "目标不存在。"
         },
         "safety": [
           "opens-browser"
@@ -347,21 +347,21 @@
           "validate"
         ],
         "usage": "ship-cli wx validate [--json]",
-        "description": "Offline structure and filtered source estimate checks (not actual compiled package size).",
+        "description": "离线检查结构与过滤后的源码体积；源码估算不是实际编译包大小。",
         "arguments": [],
         "options": [
           {
             "flags": "--json",
-            "description": "Print the full JSON report."
+            "description": "输出完整 JSON 报告。"
           }
         ],
         "output": {
           "format": "json",
-          "description": "Report with per-package sizes, limits, errors (WX_* codes) and warnings."
+          "description": "返回各包大小、限制、WX_* 错误和警告。"
         },
         "exitCodes": {
-          "0": "no errors (warnings possible)",
-          "1": "WX_* validation errors"
+          "0": "无错误，可能有警告。",
+          "1": "微信校验失败，返回 WX_*。"
         },
         "safety": [
           "read-only",
@@ -374,35 +374,35 @@
           "preview"
         ],
         "usage": "ship-cli wx preview [--qr-out <file>] [--desc <text>] [--robot <n>] [--json]",
-        "description": "Generate a phone-test QR code via miniprogram-ci (no version record is created). miniprogram-ci must be installed in the project.",
+        "description": "通过工程内的 miniprogram-ci 生成手机预览二维码，不创建版本记录。",
         "arguments": [],
         "options": [
           {
             "flags": "--qr-out <file>",
-            "description": "New PNG output outside game content; default build/ship-preview/<uuid>/qr.png."
+            "description": "产物目录外的新 PNG 路径，默认 build/ship-preview/<uuid>/qr.png。"
           },
           {
             "flags": "--desc <text>",
-            "description": "Note shown in the dev-version list."
+            "description": "开发版本列表显示的说明。"
           },
           {
             "flags": "--robot <n>",
-            "description": "miniprogram-ci robot slot 1-30."
+            "description": "miniprogram-ci 机器人编号，范围 1–30。"
           },
           {
             "flags": "--json",
-            "description": "Print JSON result."
+            "description": "输出 JSON 结果。"
           }
         ],
         "output": {
           "format": "json",
-          "description": "Result contains actual absolute qrOut, SDK result and ok; a new PNG outside game content is required."
+          "description": "返回实际 qrOut 绝对路径、SDK 结果和 ok；二维码必须是产物目录外的新文件。"
         },
         "exitCodes": {
-          "0": "QR generated",
-          "1": "invalid structure, parameters or output path",
-          "2": "key/miniprogram-ci missing",
-          "4": "miniprogram-ci run failed"
+          "0": "已生成二维码。",
+          "1": "结构、参数或输出路径无效。",
+          "2": "私钥或 miniprogram-ci 缺失。",
+          "4": "miniprogram-ci 执行失败。"
         },
         "safety": [
           "spawns-miniprogram-ci",
@@ -421,30 +421,30 @@
         "options": [
           {
             "flags": "--version <text>",
-            "description": "Dev-version number, e.g. 1.0.0 (required)."
+            "description": "开发版本号，例如 1.0.0，必填。"
           },
           {
             "flags": "--desc <text>",
-            "description": "Upload note / changelog shown in the backend."
+            "description": "平台后台显示的上传说明。"
           },
           {
             "flags": "--robot <n>",
-            "description": "miniprogram-ci robot slot 1-30 (separate pipelines use separate robots)."
+            "description": "miniprogram-ci 机器人编号，范围 1–30；不同流水线使用不同编号。"
           },
           {
             "flags": "--json",
-            "description": "Print JSON result."
+            "description": "输出 JSON 结果。"
           }
         ],
         "output": {
           "format": "json",
-          "description": "appid, robot, version and miniprogram-ci result incl. subPackageInfo sizes."
+          "description": "返回 appid、robot、version 和 SDK 结果，包含 subPackageInfo 体积信息。"
         },
         "exitCodes": {
-          "0": "uploaded as dev version",
-          "1": "validation/config failure",
-          "2": "key/miniprogram-ci missing",
-          "4": "upload failed"
+          "0": "已上传开发版本。",
+          "1": "配置或校验失败。",
+          "2": "私钥或 miniprogram-ci 缺失。",
+          "4": "上传失败。"
         },
         "safety": [
           "spawns-miniprogram-ci",
@@ -460,22 +460,22 @@
           "open"
         ],
         "usage": "ship-cli wx open <target>",
-        "description": "Open the WeChat MP backend in the browser. Only target: mp.",
+        "description": "在浏览器打开微信公众平台后台。",
         "arguments": [
           {
             "name": "target",
             "required": true,
-            "description": "Page to open; currently 'mp'."
+            "description": "目标页面，当前为 mp。"
           }
         ],
         "options": [],
         "output": {
           "format": "text",
-          "description": "Opens the default browser; no stdout payload."
+          "description": "打开默认浏览器，无标准输出结果。"
         },
         "exitCodes": {
-          "0": "opened",
-          "1": "unknown target"
+          "0": "已打开。",
+          "1": "目标不存在。"
         },
         "safety": [
           "opens-browser"

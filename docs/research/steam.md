@@ -1,4 +1,14 @@
-# Steam 官方契约
+# Vant Steam 官方契约
+
+## 定位
+
+Steam 官方契约，适用于当前随包实现。
+
+## 前置条件
+
+先按包的环境要求准备工程与工具，使用实际配置和命令帮助核对目标。
+
+## 操作流程
 
 核验日期：2026-10-09。依据 Valve [Uploading to Steam](https://partner.steamgames.com/doc/sdk/uploading)、[Steamworks API](https://partner.steamgames.com/doc/sdk/api)、[Depots](https://partner.steamgames.com/doc/store/application/depots)。
 
@@ -12,3 +22,11 @@
 Valve 没有承诺稳定的机器可读日志协议。工具采取保守判定：非零退出、错误日志、登录 Guard 提示均失败；成功记录须包含当前 AppID 的 Successfully finished ... build，真实上传还须包含 BuildID。无法确定时返回 STM_BUILD_UNKNOWN_OUTCOME。这条日志解析规则仍需真实账号日志验证。
 
 工具仅读取 SHIP_STEAM_*。免密登录需要有效的 steamcmd 缓存；SHIP_STEAM_CONFIG_VDF 提供 base64 缓存，拒绝覆盖不同的已有文件。缓存存在不代表账号或权限有效。进度和日志脱敏包括跨输出块拆分的密码及运行时生成的 Guard 码；执行超时为一小时。
+
+## 结果验证
+
+结合原始错误、结构化结果和实际产物核验；测试与真实平台执行分别记录。
+
+## 参考资料
+
+[使用说明](../../README.md)

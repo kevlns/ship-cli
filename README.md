@@ -1,29 +1,32 @@
-# ship-cli
+# Vant 游戏分发工具
 
-校验已经构建好的游戏，生成 SteamPipe 配置，执行 Steam 上传、微信小游戏预览与开发版上传。引擎构建、账号配置和正式发布由外部流程完成。
+`@kevlns/ship-cli`
 
-## 安装与发现
+## 功能
 
-Node.js 20 及以上。npm 安装：`npm install -g @kevlns/ship-cli`。源码打包安装：
+校验已构建的游戏产物，执行 Steam 上传、微信小游戏预览和开发版上传。
 
-```bash
-npm ci
-npm run check
-npm pack
-npm install -g ./kevlns-ship-cli-0.1.1.tgz
-ship-cli --version
+## 环境要求
+
+Node.js 20 及以上；Steam 需要 steamcmd 和构建账号；微信需要 miniprogram-ci 及对应项目权限。
+
+## 安装
+
+```sh
+npm install -g @kevlns/ship-cli
 ```
 
-v-cli 已注册 ship 为官方随包官方依赖，随 v-cli 安装并自动发现：
+## 快速开始
 
-```bash
-v-cli plugin list --json
-v-cli agent docs ship
-v-cli agent describe ship --json
-v-cli ship --help
+```sh
+ship-cli config init
+ship-cli config validate --json
+ship-cli doctor --json
 ```
 
-## 使用流程
+## 使用说明
+
+### 使用流程
 
 在游戏仓库执行 config init，编辑真实 AppID、产物路径，只保留使用的平台配置。路径以 ship.config.json 所在目录为基准；产物位于工程内，私钥和外部工具可用绝对路径。默认向上查找配置，--project <dir> 显式选择工程。
 
@@ -57,7 +60,7 @@ ship-cli wx open mp
 
 validate 校验结构、配置一致性及过滤后的源码预算，默认主包 / 独立分包 / 总包 4 / 4 / 30 MiB。源码统计不是编译包大小，SDK 返回的编译信息保留在结果中。preview 调用微信服务生成二维码，JSON 返回绝对路径；push 在离线门禁通过后创建开发版本。体验版、提审、发布在后台人工完成。
 
-## 配置
+### 配置
 
 schema 随包提供于 schemas/ship-config.schema.json，未知字段拒绝加载。
 
@@ -77,8 +80,20 @@ wechat 支持 appid、projectPath、robot、privateKeyPath、ignores、setting�
 
 执行命令的 --json 成功带 ok=true，失败带 ok=false 与 error.code / message / details / fix / docs；doctor 的 ok 表示体检状态。帮助、工具版本为文本。退出码：0 成功或报告已生成，1 参数 / 配置 / 内容校验拒绝，2 前置条件缺失，3 Steam 执行失败，4 微信 SDK 失败。未知完成结果按失败处理。
 
-## 维护
+## 开发与验证
 
-npm run check 覆盖构建、类型、测试、lint、打包护栏；npm run test:package 对真实 tgz 隔离安装验证。prepack 自动构建，安装包携带当前代码、schema、插件清单、Agent 规范及官方调研文档。CI 配置 Windows / Linux / macOS 与 Node 20 / 22。
+```sh
+npm ci
+npm run check
+npm run test:package
+```
 
-依据与实现边界见 [Steam](docs/research/steam.md)、[微信小游戏](docs/research/wechat-minigame.md)。
+命令返回、结构校验、模拟测试与外部平台实际运行分别核验。发布版本和依赖以随包 `package.json` 为准。
+
+## 文档
+
+[Agent 调用规范](AGENTS.md) · [文档规范](docs/documentation.md)
+
+## 许可与版权
+
+本工具采用 [MIT 许可](LICENSE)。Copyright © 2026 Vant。Vant 为工具集品牌；Figma、Unity、Steam、微信及其组件归各自权利人所有，第三方组件适用各自许可。
