@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/ship-cli",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "校验已构建的游戏产物，执行 Steam 上传、微信小游戏预览和开发版上传。",
   "private": false,
   "publishConfig": {
@@ -22,7 +22,8 @@
     "AGENTS.md",
     "README.md",
     "LICENSE",
-    "docs/"
+    "docs/",
+    "skills/"
   ],
   "scripts": {
     "build": "tsup",

@@ -46,6 +46,8 @@ const REQUIRED = [
   "schemas/ship-config.schema.json",
   "v-cli.plugin.json",
   "AGENTS.md",
+  "skills/ship/SKILL.md",
+  "skills/ship/references/project.md",
   "README.md",
   "docs/research/steam.md",
   "docs/research/wechat-minigame.md",

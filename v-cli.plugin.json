@@ -482,5 +482,11 @@
         ]
       }
     ]
-  }
+  },
+  "skills": [
+    {
+      "id": "ship",
+      "path": "skills/ship/SKILL.md"
+    }
+  ]
 }

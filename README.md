@@ -92,7 +92,7 @@ npm run test:package
 
 ## 文档
 
-[Agent 调用规范](AGENTS.md) · [文档规范](docs/documentation.md)
+[Agent 调用规范](skills/ship/SKILL.md) · [文档规范](docs/documentation.md)
 
 ## 许可与版权
 
