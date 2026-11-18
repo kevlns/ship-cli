@@ -12,11 +12,11 @@ ship-cli config validate --json
 ship-cli doctor --json
 ```
 
-首次调用前读取本规范，使用命令帮助或插件清单核对参数和执行范围。
+独立命令的参数可直接接在 `v-cli ship` 后。
 
 ## 调用规范
 
-用途：校验已构建游戏，执行 SteamPipe 上传、微信小游戏扫码预览与开发版上传。首次调用先读本规范并运行 ship-cli doctor --json；检查 ok 和所有 fail 项。doctor 离线报告退出 0 不代表在线账号可用。
+用途：校验已构建游戏，执行 SteamPipe 上传、微信小游戏扫码预览与开发版上传。诊断渠道环境时运行 ship-cli doctor --json，检查 ok 和所有 fail 项。doctor 离线报告退出 0 不代表在线账号可用。
 
 ### 顺序
 
