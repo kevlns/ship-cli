@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 export { VERSION, PACKAGE_NAME } from "./version.ts";
 export { CliError } from "./core/errors.ts";
 export { SUGGESTIONS, suggest, type FixSuggestion } from "./core/suggest.ts";

@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 /**
  * steamcmd outcome analysis. steamcmd exit codes are NOT reliable (many
  * failures exit 0 — see docs/research/steam.md), so the verdict comes from

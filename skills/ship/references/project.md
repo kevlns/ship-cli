@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # Vant 游戏分发工具 Agent 规范
 
 ## 定位
@@ -50,4 +52,4 @@ ship-cli doctor --json
 
 ## 许可与版权
 
-MIT。Copyright © 2026 Vant。
+MIT。Copyright © 2026 Vant <sl_kevln@163.com>。

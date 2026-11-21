@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Copyright © 2026 Vant <sl_kevln@163.com>
 /**
  * Install smoke test: pack the real tarball, install it globally into an
  * isolated prefix, and drive the bin through core offline flows.

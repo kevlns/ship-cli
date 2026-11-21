@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 /**
  * Redaction for diagnostics. Secrets must never appear in echoed output, log
  * files or `--json` results. Longer secrets are replaced first.

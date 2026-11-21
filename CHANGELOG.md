@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # Changelog
 
 ## 0.1.3 · 2026-11-13

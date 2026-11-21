@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
 import { generateSteamTotp } from "../src/steam/totp.ts";

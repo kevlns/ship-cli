@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Copyright © 2026 Vant <sl_kevln@163.com>
 /**
  * Publish content guard (family convention). Fails closed when:
  *  - tarball identity (name/version) does not match package.json

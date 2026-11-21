@@ -2,6 +2,8 @@
 name: ship
 description: "校验已构建的游戏产物，执行 Steam 上传、微信小游戏预览和开发版上传。"
 ---
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 
 # 游戏分发
 

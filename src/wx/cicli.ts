@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { createRequire } from "node:module";
 import path from "node:path";
 import fsp from "node:fs/promises";

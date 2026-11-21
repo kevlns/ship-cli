@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import { minimatch } from "minimatch";
 import { CliError } from "../core/errors.ts";
 

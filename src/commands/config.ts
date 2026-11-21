@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import path from "node:path";
 import { CONFIG_FILE_NAME, CONFIG_TEMPLATE, loadConfig, writeConfigTemplate } from "../core/config.ts";
 import { log } from "../core/logger.ts";

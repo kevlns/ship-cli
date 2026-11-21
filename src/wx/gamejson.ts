@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 /** Leading / in game.json denotes the game root, not a host filesystem root. */
 export function gameRelativePath(value: string): string {
   if (

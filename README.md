@@ -1,3 +1,5 @@
+<!-- Copyright © 2026 Vant <sl_kevln@163.com> -->
+
 # Vant 游戏分发工具
 
 `@kevlns/ship-cli`
@@ -96,4 +98,4 @@ npm run test:package
 
 ## 许可与版权
 
-本工具采用 [MIT 许可](LICENSE)。Copyright © 2026 Vant。Vant 为工具集品牌；Figma、Unity、Steam、微信及其组件归各自权利人所有，第三方组件适用各自许可。
+本工具采用 [MIT 许可](LICENSE)。Copyright © 2026 Vant <sl_kevln@163.com>。Vant 为工具集品牌；Figma、Unity、Steam、微信及其组件归各自权利人所有，第三方组件适用各自许可。

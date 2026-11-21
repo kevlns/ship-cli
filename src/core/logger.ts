@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 /**
  * Dual-channel output, family convention: results go to stdout (pipeable,
  * scriptable), diagnostics go to stderr. `--json` commands print exactly one

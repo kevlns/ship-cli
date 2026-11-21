@@ -1,3 +1,4 @@
+// Copyright © 2026 Vant <sl_kevln@163.com>
 import type { ShipErrorCode } from "./errors.ts";
 
 export interface FixSuggestion {
