@@ -1,6 +1,6 @@
 {
   "name": "@kevlns/ship-cli",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "校验已构建的游戏产物，执行 Steam 上传、微信小游戏预览和开发版上传。",
   "private": false,
   "publishConfig": {
@@ -49,7 +49,7 @@
     "publish"
   ],
   "author": "Vant",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "node": ">=20"
   },
